@@ -2,6 +2,7 @@ const express = require('express');
 const expressHandlebars = require('express-handlebars');
 const session = require('express-session');
 const canvas = require('canvas');
+const fs = require("fs");
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Configuration and Setup
@@ -124,6 +125,7 @@ app.get('/error', (req, res) => {
 
 app.get('/post/:id', (req, res) => {
     // TODO: Render post detail page
+    res.render('/post');
 });
 app.post('/posts', (req, res) => {
     // TODO: Add a new post and redirect to home
@@ -135,7 +137,7 @@ app.post('/like/:id', (req, res) => {
 });
 app.get('/profile', isAuthenticated, (req, res) => {
     // TODO: Render profile page
-    res.render('profile');
+    res.render('/profile');
 });
 app.get('/avatar/:username', (req, res) => {
     // TODO: Serve the avatar image for the user
@@ -269,7 +271,7 @@ function logoutUser(req, res) {
 // Function to render the profile page
 function renderProfile(req, res) {
     // TODO: Fetch user posts and render the profile page
-    res.render('home', { posts, user });
+    res.render('profile');
 }
 
 // Function to update post likes
@@ -323,4 +325,12 @@ function generateAvatar(letter, width = 100, height = 100) {
     // 3. Draw the background color
     // 4. Draw the letter in the center
     // 5. Return the avatar as a PNG buffer
+    const avatar = canvas.createCanvas(width, height);
+    const context = avatar.getContext('2d');
+    context.fillStyle = 'green';
+    context.fillText(letter,width/2,height/2);
+    context.fillRect(0,0,width,height);
+    const buffer = avatar.toBuffer("image/png");
+    fs.writeFile('/views/layouts/images/avatar_'+letter+'.png');
+    return buffer;
 }
