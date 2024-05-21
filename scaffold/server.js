@@ -2,7 +2,9 @@ const express = require('express');
 const expressHandlebars = require('express-handlebars');
 const session = require('express-session');
 const canvas = require('canvas');
-const fs = require("fs");
+
+require('dotenv').config();
+const accessToken = process.env.EMOJI_API_KEY;
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Configuration and Setup
@@ -122,25 +124,27 @@ app.get('/error', (req, res) => {
 
 // Additional routes that you must implement
 
-
+/*  REMOVED
 app.get('/post/:id', (req, res) => {
     // TODO: Render post detail page
-    res.render('/post');
-});
+});*/
+
 app.post('/posts', (req, res) => {
     // TODO: Add a new post and redirect to home
-    addPost(req.body.title,req.body.content,req.body.user);
-    res.redirect('/home');
+    let body = req.body;
+    addPost(body.title, body.content, findUserById(req.session.userId));
+    res.redirect('/');
 });
 app.post('/like/:id', (req, res) => {
     // TODO: Update post likes
 });
 app.get('/profile', isAuthenticated, (req, res) => {
     // TODO: Render profile page
-    res.render('/profile');
+    res.render('profile');
 });
 app.get('/avatar/:username', (req, res) => {
     // TODO: Serve the avatar image for the user
+    handleAvatar(req, res);
 });
 app.post('/register', (req, res) => {
     // TODO: Register a new user
@@ -156,6 +160,10 @@ app.get('/logout', (req, res) => {
 });
 app.post('/delete/:id', isAuthenticated, (req, res) => {
     // TODO: Delete a post if the current user is the owner
+});
+
+app.get('/emojis', (req, res) => {
+    fetch("https://emoji-api.com/emojis?access_key=${accessToken}")
 });
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -212,8 +220,8 @@ function addUser(username) {
     newUser.id = users[users.length-1]['id']+1;
     newUser.username = username;
     newUser.avatar_url = undefined;
-    newUser.memberSince = ""+currDate.getFullYear+"-"+currDate.getMonth+"-"+currDate.getDate+" "
-    +String(currDate.getHours).padStart(2,'0')+":"+String(currDate.getMinutes).padStart(2,'0');
+    newUser.memberSince = ""+currDate.getFullYear()+"-"+currDate.getMonth()+"-"+currDate.getDate()+" "
+    +String(currDate.getHours()).padStart(2,'0')+":"+String(currDate.getMinutes()).padStart(2,'0');
     users.push(newUser);
 }
 
@@ -271,7 +279,7 @@ function logoutUser(req, res) {
 // Function to render the profile page
 function renderProfile(req, res) {
     // TODO: Fetch user posts and render the profile page
-    res.render('profile');
+    res.render('/profile');
 }
 
 // Function to update post likes
@@ -282,8 +290,11 @@ function updatePostLikes(req, res) {
 // Function to handle avatar generation and serving
 function handleAvatar(req, res) {
     // TODO: Generate and serve the user's avatar image
+    let username = req.body.username;
+    let user = findUserByUsername(username);
     let letter = String(req.body.username).charAt(0);
-    let avatar = generateAvatar(letter);
+    user.avatar_url = generateAvatar(letter);
+    res.send(user.avatar_url);
 }
 
 // Function to get the current user from session
@@ -310,10 +321,11 @@ function addPost(title, content, user) {
     newPost.title = title;
     newPost.content = content;
     newPost.username = user.username;
-    newPost.timestamp = ""+currDate.getFullYear+"-"+currDate.getMonth+"-"+currDate.getDate+" "
-    +String(currDate.getHours).padStart(2,'0')+":"+String(currDate.getMinutes).padStart(2,'0');
+    newPost.timestamp = ""+currDate.getFullYear()+"-"+currDate.getMonth()+"-"+currDate.getDate()+" "
+    +String(currDate.getHours()).padStart(2,'0')+":"+String(currDate.getMinutes()).padStart(2,'0');
     newPost.likes = 0;
     posts.push(newPost);
+    console.log(posts);
 }
 
 // Function to generate an image avatar
@@ -327,10 +339,10 @@ function generateAvatar(letter, width = 100, height = 100) {
     // 5. Return the avatar as a PNG buffer
     const avatar = canvas.createCanvas(width, height);
     const context = avatar.getContext('2d');
-    context.fillStyle = 'green';
-    context.fillText(letter,width/2,height/2);
+    const color = letter.charCodeAt(0);
+    context.fillStyle = rgb(color,color,color);
+    context.fillText(letter,width/4,height/4);
     context.fillRect(0,0,width,height);
-    const buffer = avatar.toBuffer("image/png");
-    fs.writeFile('/views/layouts/images/avatar_'+letter+'.png');
-    return buffer;
+    console.log('<img src="' + avatar.toDataURL() + '" />')
+    return avatar.toDataURL();
 }
