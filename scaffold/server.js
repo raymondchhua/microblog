@@ -127,24 +127,30 @@ app.get('/post/:id', (req, res) => {
 });
 app.post('/posts', (req, res) => {
     // TODO: Add a new post and redirect to home
+    addPost(req.body.title,req.body.content,req.body.user);
+    res.redirect('/home');
 });
 app.post('/like/:id', (req, res) => {
     // TODO: Update post likes
 });
 app.get('/profile', isAuthenticated, (req, res) => {
     // TODO: Render profile page
+    res.render('profile');
 });
 app.get('/avatar/:username', (req, res) => {
     // TODO: Serve the avatar image for the user
 });
 app.post('/register', (req, res) => {
     // TODO: Register a new user
+    registerUser(req, res);
 });
 app.post('/login', (req, res) => {
     // TODO: Login a user
+    loginUser(req, res);
 });
 app.get('/logout', (req, res) => {
     // TODO: Logout the user
+    logoutUser(req, res);
 });
 app.post('/delete/:id', isAuthenticated, (req, res) => {
     // TODO: Delete a post if the current user is the owner
@@ -175,16 +181,38 @@ let users = [
 // Function to find a user by username
 function findUserByUsername(username) {
     // TODO: Return user object if found, otherwise return undefined
+    for (i=0; i < users.length; i++) {
+        let user = users[i];
+        if (user['username'] == username) {
+            return user;
+        }
+    }
+    return undefined;
 }
 
 // Function to find a user by user ID
 function findUserById(userId) {
     // TODO: Return user object if found, otherwise return undefined
+    for (i=0; i < users.length; i++) {
+        let user = users[i];
+        if (user['id'] == userId) {
+            return user;
+        }
+    }
+    return undefined;
 }
 
 // Function to add a new user
 function addUser(username) {
     // TODO: Create a new user object and add to users array
+    let newUser = {};
+    const currDate = new Date();
+    newUser.id = users[users.length-1]['id']+1;
+    newUser.username = username;
+    newUser.avatar_url = undefined;
+    newUser.memberSince = ""+currDate.getFullYear+"-"+currDate.getMonth+"-"+currDate.getDate+" "
+    +String(currDate.getHours).padStart(2,'0')+":"+String(currDate.getMinutes).padStart(2,'0');
+    users.push(newUser);
 }
 
 // Middleware to check if user is authenticated
@@ -200,21 +228,48 @@ function isAuthenticated(req, res, next) {
 // Function to register a user
 function registerUser(req, res) {
     // TODO: Register a new user and redirect appropriately
+    const username = req.body.username;
+    const user = findUserByUsername(username);
+    if (user) {
+        res.redirect('/register?error=Username+taken');
+    } else {
+        addUser(username);
+        res.redirect('/login');
+    }
 }
 
 // Function to login a user
 function loginUser(req, res) {
     // TODO: Login a user and redirect appropriately
+    const username = req.body.username;
+    const user = findUserByUsername(username);
+
+    if (user) {
+        req.session.userId = user.id;
+        req.session.loggedIn = true;
+        res.redirect('/');
+    } else {
+        res.redirect('/login?error=Invalid+username');
+    }
 }
 
 // Function to logout a user
 function logoutUser(req, res) {
     // TODO: Destroy session and redirect appropriately
+    req.session.destroy(err => {
+        if (err) {
+            console.error('Error destroying session:', err);
+            res.direct('/error');
+        } else {
+            res.redirect('/');
+        }
+    });
 }
 
 // Function to render the profile page
 function renderProfile(req, res) {
     // TODO: Fetch user posts and render the profile page
+    res.render('home', { posts, user });
 }
 
 // Function to update post likes
@@ -225,11 +280,18 @@ function updatePostLikes(req, res) {
 // Function to handle avatar generation and serving
 function handleAvatar(req, res) {
     // TODO: Generate and serve the user's avatar image
+    let letter = String(req.body.username).charAt(0);
+    let avatar = generateAvatar(letter);
 }
 
 // Function to get the current user from session
 function getCurrentUser(req) {
     // TODO: Return the user object if the session user ID matches
+    const id = req.body.id;
+
+    if (req.session.userId == id) {
+        return findUserById(id);
+    }
 }
 
 // Function to get all posts, sorted by latest first
@@ -240,6 +302,16 @@ function getPosts() {
 // Function to add a new post
 function addPost(title, content, user) {
     // TODO: Create a new post object and add to posts array
+    let newPost = {};
+    const currDate = new Date();
+    newPost.id = users[users.length-1]['id']+1;
+    newPost.title = title;
+    newPost.content = content;
+    newPost.username = user.username;
+    newPost.timestamp = ""+currDate.getFullYear+"-"+currDate.getMonth+"-"+currDate.getDate+" "
+    +String(currDate.getHours).padStart(2,'0')+":"+String(currDate.getMinutes).padStart(2,'0');
+    newPost.likes = 0;
+    posts.push(newPost);
 }
 
 // Function to generate an image avatar
