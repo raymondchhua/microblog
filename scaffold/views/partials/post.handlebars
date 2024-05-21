@@ -19,31 +19,26 @@
 
         // you might want to "fetch" something...
         fetch('/like/:id', {
-            method: "Post",
-            headers: {"Content-Type" : 'application/x-www-form-urlencoded',},
-            body: JSON.stringify(postId)
-            })
-        .then((res) => res.text())
-        .then((body)=>{console.log(body)})
-        .catch((err) => {console.error('error: ', error);});
+            method: "POST",
+            body: JSON.stringify(postId)})
+        .then(res => res.text())
+        .then(body=>{console.log(body);})
+        .catch(err => {console.error('error: ', err);});
 
     }
 
     function handleDeleteClick(event) {
         const buttonElement = event.target.closest('.delete-button');
-        const postId = buttonElement.getAttribute('data-id');        
-
-        // you might want to "fetch" something...        
-        const postId = event.target.getAttribute('data-id');
+        const postId = buttonElement.getAttribute('data-id');
 
         // you might want to "fetch" something...
         fetch('/delete/:id', {
-            method: "Post",
+            method: "POST",
             headers: {"Content-Type" : 'application/x-www-form-urlencoded',},
             body: JSON.stringify(postId)
             })
         .then((res) => res.text())
-        .then((body)=>{console.log(body)})
+        .then((body)=>{console.log(body);})
         .catch((err) => {console.error('error: ', error);});
     }    
 </script>

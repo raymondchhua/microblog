@@ -2,6 +2,7 @@ const express = require('express');
 const expressHandlebars = require('express-handlebars');
 const session = require('express-session');
 const canvas = require('canvas');
+const fs = require("fs");
 
 require('dotenv').config();
 const accessToken = process.env.EMOJI_API_KEY;
@@ -124,11 +125,6 @@ app.get('/error', (req, res) => {
 
 // Additional routes that you must implement
 
-/*  REMOVED
-app.get('/post/:id', (req, res) => {
-    // TODO: Render post detail page
-});*/
-
 app.post('/posts', (req, res) => {
     // TODO: Add a new post and redirect to home
     let body = req.body;
@@ -140,7 +136,7 @@ app.post('/like/:id', (req, res) => {
 });
 app.get('/profile', isAuthenticated, (req, res) => {
     // TODO: Render profile page
-    res.render('profile');
+    renderProfile(req, res);
 });
 app.get('/avatar/:username', (req, res) => {
     // TODO: Serve the avatar image for the user
@@ -163,7 +159,9 @@ app.post('/delete/:id', isAuthenticated, (req, res) => {
 });
 
 app.get('/emojis', (req, res) => {
-    fetch("https://emoji-api.com/emojis?access_key=${accessToken}")
+    fetch("https://emoji-api.com/emojis?access_key=5230c75dbfacf312d022b31393036b132c22e784")
+    .then(response => response.json())
+    .then(response => {res.send(response);})
 });
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -279,6 +277,15 @@ function logoutUser(req, res) {
 // Function to render the profile page
 function renderProfile(req, res) {
     // TODO: Fetch user posts and render the profile page
+    let allPosts = getPosts();
+    let user = findUserById(req.session.id);
+    let userPosts = [];
+    for (i=0; i< allPosts.length; i++) {
+        if (allPosts[i].username == user.username) {
+            userPosts.push(allPosts[i]);
+        }
+    }
+    res.send(userPosts);
     res.render('/profile');
 }
 
@@ -290,11 +297,10 @@ function updatePostLikes(req, res) {
 // Function to handle avatar generation and serving
 function handleAvatar(req, res) {
     // TODO: Generate and serve the user's avatar image
-    let username = req.body.username;
+    let username = req.params.username;
     let user = findUserByUsername(username);
     let letter = String(req.body.username).charAt(0);
     user.avatar_url = generateAvatar(letter);
-    res.send(user.avatar_url);
 }
 
 // Function to get the current user from session
@@ -343,6 +349,7 @@ function generateAvatar(letter, width = 100, height = 100) {
     context.fillStyle = rgb(color,color,color);
     context.fillText(letter,width/4,height/4);
     context.fillRect(0,0,width,height);
-    console.log('<img src="' + avatar.toDataURL() + '" />')
+    const buffer = avatar.toBuffer("image/png");
+    fs.writeFileSync("avatar.png", buffer);
     return avatar.toDataURL();
 }

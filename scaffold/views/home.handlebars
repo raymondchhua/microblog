@@ -9,8 +9,9 @@
             <!-- make a header here -->
             <form action="/posts" method="POST">
                 <!-- title input field name = "title" -->
+                Title: <input name="title" type="'text">
                 <!-- text area input field name = "content" -->
-
+                Content: <input name="content" type="text">
                 <div class="form-actions">
                     <button type="button" class="emoji-button" onclick="toggleEmojiPanel()">😀</button>
                     <button type="submit" class="post-button">Post</button>
@@ -19,7 +20,9 @@
 
             <div id="emoji-container" class="emoji-panel" style="display: none;">
                 <!-- input field for the emoji search, use oninput="searchEmojis() -->
+                <input id="emoji-search" type="search" oninput="searchEmojis()">
                 <!-- a div, id = "emoji-grid" -->
+                <div id="emoji-grid"></div>
             </div>
         </section>
     {{/if}}
@@ -60,9 +63,12 @@ function toggleEmojiPanel() {
 
     if(container.style.display === 'block' && allEmojis.length == 0){
         // go "Fetch" you some emojis and show them off with displayEmojies
-        /*fetch("/emojis", {
-            method: "Get",
-        })*/
+        fetch("/emojis", {
+            method : "GET"
+        })
+        .then(res => res.json())
+        .then(emojis => {displayEmojis(emojis);allEmojis.push(emojis);})
+        .catch((err) => {console.error('Error fetching emojis:', err);});  
     }
 }
 
@@ -86,9 +92,14 @@ function displayEmojis(emojis,limit=200) {
 function searchEmojis() {
     const searchTerm = document.getElementById('emoji-search').value.toLowerCase();
     // array.filter takes a predicate
-    // use string.includes. 
+    // use string.includes.
 
-    const filteredEmojis = allEmojis.filter(...);
+    function include(emoji) {
+        console.log(emoji);
+        return emoji.slug.includes(searchTerm);
+    }
+   
+    const filteredEmojis = allEmojis[0].filter(include);
     
     displayEmojis(filteredEmojis);
 }
