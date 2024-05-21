@@ -159,7 +159,7 @@ app.post('/delete/:id', isAuthenticated, (req, res) => {
 });
 
 app.get('/emojis', (req, res) => {
-    fetch("https://emoji-api.com/emojis?access_key=5230c75dbfacf312d022b31393036b132c22e784")
+    fetch("https://emoji-api.com/emojis?access_key=${accesstoken}")
     .then(response => response.json())
     .then(response => {res.send(response);})
 });
