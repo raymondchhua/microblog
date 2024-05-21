@@ -277,16 +277,7 @@ function logoutUser(req, res) {
 // Function to render the profile page
 function renderProfile(req, res) {
     // TODO: Fetch user posts and render the profile page
-    let allPosts = getPosts();
-    let user = findUserById(req.session.id);
-    let userPosts = [];
-    for (i=0; i< allPosts.length; i++) {
-        if (allPosts[i].username == user.username) {
-            userPosts.push(allPosts[i]);
-        }
-    }
-    res.send(userPosts);
-    res.render('/profile');
+    res.render('profile');
 }
 
 // Function to update post likes
