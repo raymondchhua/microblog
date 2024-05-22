@@ -2,7 +2,6 @@ const express = require('express');
 const expressHandlebars = require('express-handlebars');
 const session = require('express-session');
 const canvas = require('canvas');
-const fs = require("fs");
 
 require('dotenv').config();
 const accessToken = process.env.EMOJI_API_KEY;
@@ -133,6 +132,7 @@ app.post('/posts', (req, res) => {
 });
 app.post('/like/:id', (req, res) => {
     // TODO: Update post likes
+    updatePostLikes(req, res);
 });
 app.get('/profile', isAuthenticated, (req, res) => {
     // TODO: Render profile page
@@ -156,6 +156,7 @@ app.get('/logout', (req, res) => {
 });
 app.post('/delete/:id', isAuthenticated, (req, res) => {
     // TODO: Delete a post if the current user is the owner
+    deletePost(req,res);
 });
 
 app.get('/emojis', (req, res) => {
@@ -277,12 +278,37 @@ function logoutUser(req, res) {
 // Function to render the profile page
 function renderProfile(req, res) {
     // TODO: Fetch user posts and render the profile page
-    res.render('profile');
+    let user = findUserById(req.session.userId);
+    let userPosts = {};
+    userPosts.posts = [];
+    for (i=0;i<posts.length;i++) {
+        if (posts[i].username == user.username) {
+            userPosts.posts.push(posts[i]);
+        }
+    }
+    res.render('profile', {user:userPosts});
 }
 
 // Function to update post likes
 function updatePostLikes(req, res) {
     // TODO: Increment post likes if conditions are met
+    let postId = req.params.id;
+    for(i=0;i<posts.length;i++){
+        if (posts[i].id == postId) {
+            posts[i].likes += 1;
+        }
+    }
+}
+
+function deletePost(req, res) {
+    let postId = req.params.id;
+    let user = findUserById(req.session.userId);
+    for(i=0;i<posts.length;i++){
+        if (posts[i].id == postId && posts[i].username == user.username) {
+            posts = posts.splice(i,1);
+            break;
+        }
+    }
 }
 
 // Function to handle avatar generation and serving
@@ -292,6 +318,7 @@ function handleAvatar(req, res) {
     let user = findUserByUsername(username);
     let letter = String(req.body.username).charAt(0);
     user.avatar_url = generateAvatar(letter);
+    res.render('main', {user:user});
 }
 
 // Function to get the current user from session
@@ -322,7 +349,6 @@ function addPost(title, content, user) {
     +String(currDate.getHours()).padStart(2,'0')+":"+String(currDate.getMinutes()).padStart(2,'0');
     newPost.likes = 0;
     posts.push(newPost);
-    console.log(posts);
 }
 
 // Function to generate an image avatar
@@ -340,7 +366,6 @@ function generateAvatar(letter, width = 100, height = 100) {
     context.fillStyle = rgb(color,color,color);
     context.fillText(letter,width/4,height/4);
     context.fillRect(0,0,width,height);
-    const buffer = avatar.toBuffer("image/png");
-    fs.writeFileSync("avatar.png", buffer);
+    console.log(avatar.toDataURL());
     return avatar.toDataURL();
 }
