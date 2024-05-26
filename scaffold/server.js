@@ -316,10 +316,11 @@ function deletePost(req, res) {
 // Function to handle avatar generation and serving
 function handleAvatar(req, res) {
     // TODO: Generate and serve the user's avatar image
-    let username = getCurrentUser(req).username;
-    let user = findUserByUsername(username);
-    let letter = String(req.body.username).charAt(0);
+    let user = getCurrentUser(req);
+    let username = user.username;
+    let letter = String(username).charAt(0);
     user.avatar_url = generateAvatar(letter);
+    console.log(user.avatar_url);
     res.render('main', {user:user});
 }
 
@@ -327,7 +328,7 @@ function handleAvatar(req, res) {
 function getCurrentUser(req) {
     // TODO: Return the user object if the session user ID matches
     const id = req.session.userId;
-    console.log(undefined || {});
+    
     if (id) {
         return findUserById(id);
     }

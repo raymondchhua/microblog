@@ -9,12 +9,16 @@
         <strong class="title">{{title}}</strong>
         <br>
         {{content}}
-        {{user.username}}
+        {{}}
         <div class="post-status-bar">
             <!-- everything that is shown in the status bar -->
-
-            <button class="like-button" type='button'>♥</button>
-            <button class="delete-button" type='button'><i class="fas fa-trash-alt"> </i></button>
+            
+            {{#ifCond username user.username}}
+                 <button class="delete-button" type='button' onclick="handleDeleteClick()"><i class="fas fa-trash-alt"> </i></button>
+            {{else}}
+                <button class="like-button" type='button' onclick="handleLikeClick()">♥</button>
+            {{/ifCond}}
+            
             {{likes}} Likes Posted by {{username}} on {{timestamp}}
 
         </div>        
@@ -23,6 +27,7 @@
 <script>
 
     function handleLikeClick(event) {
+        console.log(event);
         const buttonElement = event.target.closest('.like-button');
         const postId = event.target.getAttribute('data-id');
 
