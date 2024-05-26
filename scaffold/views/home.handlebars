@@ -29,16 +29,17 @@
 
     <section class="posts-list">
         <!-- recent posts -->
-
+        <h1>Recent Posts</h1>
         {{#if posts.length}}
         <ul>
             {{#each posts}}
                 <!-- you have to pass the user in to posts and this is the syntax -->
-                {{> post this user=../user}}            
+                {{> post this user=../user}} 
             {{/each}}
         </ul>
         {{else}}
             <!-- no posts, oh no, what now? -->
+             No Posts ... Be First To Post!
         {{/if}}
     </section>
 </section>

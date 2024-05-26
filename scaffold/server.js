@@ -2,6 +2,7 @@ const express = require('express');
 const expressHandlebars = require('express-handlebars');
 const session = require('express-session');
 const canvas = require('canvas');
+const fs = require('fs');
 
 require('dotenv').config();
 const accessToken = process.env.EMOJI_API_KEY;
@@ -160,7 +161,8 @@ app.post('/delete/:id', isAuthenticated, (req, res) => {
 });
 
 app.get('/emojis', (req, res) => {
-    fetch("https://emoji-api.com/emojis?access_key=${accesstoken}")
+    //${accesstoken}
+    fetch("https://emoji-api.com/emojis?access_key=5230c75dbfacf312d022b31393036b132c22e784")
     .then(response => response.json())
     .then(response => {res.send(response);})
 });
@@ -302,7 +304,7 @@ function updatePostLikes(req, res) {
 
 function deletePost(req, res) {
     let postId = req.params.id;
-    let user = findUserById(req.session.userId);
+    let user = getCurrentUser(req).userId;
     for(i=0;i<posts.length;i++){
         if (posts[i].id == postId && posts[i].username == user.username) {
             posts = posts.splice(i,1);
@@ -314,7 +316,7 @@ function deletePost(req, res) {
 // Function to handle avatar generation and serving
 function handleAvatar(req, res) {
     // TODO: Generate and serve the user's avatar image
-    let username = req.params.username;
+    let username = getCurrentUser(req).username;
     let user = findUserByUsername(username);
     let letter = String(req.body.username).charAt(0);
     user.avatar_url = generateAvatar(letter);
@@ -324,11 +326,12 @@ function handleAvatar(req, res) {
 // Function to get the current user from session
 function getCurrentUser(req) {
     // TODO: Return the user object if the session user ID matches
-    const id = req.body.id;
-
-    if (req.session.userId == id) {
+    const id = req.session.userId;
+    console.log(undefined || {});
+    if (id) {
         return findUserById(id);
     }
+    return undefined;
 }
 
 // Function to get all posts, sorted by latest first
@@ -366,6 +369,7 @@ function generateAvatar(letter, width = 100, height = 100) {
     context.fillStyle = rgb(color,color,color);
     context.fillText(letter,width/4,height/4);
     context.fillRect(0,0,width,height);
-    console.log(avatar.toDataURL());
+    const buffer = canvas.toBuffer('image/png');
+    fs.writeFileSync('./public/images/avatar.png', buffer);
     return avatar.toDataURL();
 }

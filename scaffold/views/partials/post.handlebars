@@ -5,16 +5,25 @@
     </div>
     <div class="post-content preserve-newlines">
         <!-- the post -->
+
+        <strong class="title">{{title}}</strong>
+        <br>
+        {{content}}
+        {{user.username}}
         <div class="post-status-bar">
             <!-- everything that is shown in the status bar -->
-            <!-- Heart = ♥ -->
-            <!-- font awesome  trashcan = <i class="fas fa-trash-alt"> </i>-->
+
+            <button class="like-button" type='button'>♥</button>
+            <button class="delete-button" type='button'><i class="fas fa-trash-alt"> </i></button>
+            {{likes}} Likes Posted by {{username}} on {{timestamp}}
+
         </div>        
     </div>
 </div>
 <script>
 
     function handleLikeClick(event) {
+        const buttonElement = event.target.closest('.like-button');
         const postId = event.target.getAttribute('data-id');
 
         // you might want to "fetch" something...
