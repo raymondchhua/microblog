@@ -7,11 +7,6 @@ ul {
     list-style-type: none;
 }
 
-button {
-    border:none;
-    background-color: white;
-}
-
 .post {
     border: solid;
     border-radius: 10px;
