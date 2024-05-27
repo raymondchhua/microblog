@@ -128,7 +128,7 @@ app.get('/error', (req, res) => {
 app.post('/posts', (req, res) => {
     // TODO: Add a new post and redirect to home
     let body = req.body;
-    addPost(body.title, body.content, findUserById(req.session.userId));
+    addPost(body.title, body.content, getCurrentUser(req));
     res.redirect('/');
 });
 app.post('/like/:id', (req, res) => {
@@ -187,6 +187,9 @@ let posts = [
 let users = [
     { id: 1, username: 'SampleUser', avatar_url: undefined, memberSince: '2024-01-01 08:00' },
     { id: 2, username: 'AnotherUser', avatar_url: undefined, memberSince: '2024-01-02 09:00' },
+];
+let userLikes = [
+    // {userId :  // postIds: []}
 ];
 
 // Function to find a user by username
@@ -291,14 +294,75 @@ function renderProfile(req, res) {
     res.render('profile', {user:userPosts});
 }
 
+function updateUserLikes(userId, post, res) {
+    let foundUser = false;
+    let foundPost = false;
+    if (userLikes.length == 0) {
+        let userLikeData = {}
+        userLikeData.userId = userId;
+        userLikeData.postIds = [];
+        userLikeData.postIds.push(post.id);
+        post.likes += 1;
+        userLikes.push(userLikeData);
+        console.log("No user initally");
+        res.send({likes: JSON.stringify(1)});
+        return;
+    }
+    for(i=0;i<userLikes.length;i++){
+        if (userLikes[i].userId == userId) {
+            foundUser = true;
+            let postIds = userLikes[i].postIds;
+            for(j=0;j<postIds.length;j++) {
+                if (postIds[j] == post.id) {
+                    foundPost = true;
+                    post.likes -= 1;
+                    postIds = postIds.splice(j,1);
+                    console.log("user and post");
+                    res.send({likes: JSON.stringify(0)});
+                    return;
+                }
+            }
+            if (foundPost==false) {
+                post.likes += 1;
+                userLikes[i].postIds.push(post.id);
+                console.log("user but no post");
+                res.send({likes: JSON.stringify(1)});
+                return;
+            }
+            break;
+        }
+        if (foundUser==false) {
+            let userLikeData = {}
+            userLikeData.userId = userId;
+            userLikeData.postIds = [];
+            userLikeData.postIds.push(post.id);
+            post.likes += 1;
+            userLikes.push(userLikeData);
+            console.log("No user");
+            res.send({likes: JSON.stringify(1)});
+            return;
+        }
+    }
+
+    return;
+}
 // Function to update post likes
 function updatePostLikes(req, res) {
     // TODO: Increment post likes if conditions are met
-    let postId = req.params.id;
-    for(i=0;i<posts.length;i++){
-        if (posts[i].id == postId) {
-            posts[i].likes += 1;
+    //console.log("USERID " + req.session.userId);
+    let userId = req.session.userId;
+    if (userId) {
+        let postId = parseInt(req.body.id);
+        //console.log("POSTID " + postId);
+        for(i=0;i<posts.length;i++){
+            let post = posts[i];
+            if (post.id == postId) {
+                updateUserLikes(userId, post, res);
+                break;
+            }
         }
+    } else {
+        res.send({redirect: '/login'});
     }
 }
 
