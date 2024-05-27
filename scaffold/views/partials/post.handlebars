@@ -59,7 +59,6 @@
 
     function handleDeleteClick(event) {
         const postId = event.getAttribute('data-id');
-
         // you might want to "fetch" something...
         let data = {id:postId};
 
@@ -71,7 +70,17 @@
             body: JSON.stringify(data)
             })
         .then((res) => res.json())
-        .then((body)=>{console.log(body);})
+        .then((body)=>{
+            if (body.deleted) {
+                //let post = document.getElementsByClassName();
+                let currentNode = event;
+                while (currentNode.className != 'post') {
+                    currentNode = currentNode.parentElement;
+                    console.log(currentNode);
+                }
+                currentNode.remove();
+            }
+        })
         .catch((err) => {console.error('error: ', err);});
     }    
 </script>

@@ -231,7 +231,7 @@ function addUser(username) {
 
 // Middleware to check if user is authenticated
 function isAuthenticated(req, res, next) {
-    console.log(req.session.userId);
+    //console.log(req.session.userId);
     if (req.session.userId) {
         next();
     } else {
@@ -291,7 +291,7 @@ function renderProfile(req, res) {
             userPosts.posts.push(posts[i]);
         }
     }
-    res.render('profile', {user:userPosts});
+    res.render('profile', {userPosts:userPosts, user:user});
 }
 
 function updateUserLikes(userId, post, res) {
@@ -304,7 +304,7 @@ function updateUserLikes(userId, post, res) {
         userLikeData.postIds.push(post.id);
         post.likes += 1;
         userLikes.push(userLikeData);
-        console.log("No user initally");
+        //console.log("No user initally");
         res.send({likes: JSON.stringify(1)});
         return;
     }
@@ -316,8 +316,8 @@ function updateUserLikes(userId, post, res) {
                 if (postIds[j] == post.id) {
                     foundPost = true;
                     post.likes -= 1;
-                    postIds = postIds.splice(j,1);
-                    console.log("user and post");
+                    postIds.splice(j,1);
+                    //console.log("user and post");
                     res.send({likes: JSON.stringify(0)});
                     return;
                 }
@@ -325,7 +325,7 @@ function updateUserLikes(userId, post, res) {
             if (foundPost==false) {
                 post.likes += 1;
                 userLikes[i].postIds.push(post.id);
-                console.log("user but no post");
+                //console.log("user but no post");
                 res.send({likes: JSON.stringify(1)});
                 return;
             }
@@ -338,7 +338,7 @@ function updateUserLikes(userId, post, res) {
             userLikeData.postIds.push(post.id);
             post.likes += 1;
             userLikes.push(userLikeData);
-            console.log("No user");
+            //console.log("No user");
             res.send({likes: JSON.stringify(1)});
             return;
         }
@@ -349,7 +349,6 @@ function updateUserLikes(userId, post, res) {
 // Function to update post likes
 function updatePostLikes(req, res) {
     // TODO: Increment post likes if conditions are met
-    //console.log("USERID " + req.session.userId);
     let userId = req.session.userId;
     if (userId) {
         let postId = parseInt(req.body.id);
@@ -367,14 +366,22 @@ function updatePostLikes(req, res) {
 }
 
 function deletePost(req, res) {
-    let postId = req.params.id;
-    let user = getCurrentUser(req).userId;
-    for(i=0;i<posts.length;i++){
-        if (posts[i].id == postId && posts[i].username == user.username) {
-            posts = posts.splice(i,1);
-            break;
+    let userId = req.session.userId;
+    if (userId) {
+        let postId = parseInt(req.body.id);
+        let user = findUserById(userId);
+        for(i=0;i<posts.length;i++){
+            let post = posts[i];
+            if ((post.id == postId) && (post.username == user.username)) {
+                posts.splice(i, 1);
+                //console.log(posts);
+                res.send({deleted: 'deleted'});
+                break;
+            }
         }
-    }
+    } else {
+        res.send({redirect: '/login'});
+    }   
 }
 
 // Function to handle avatar generation and serving
