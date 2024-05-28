@@ -141,7 +141,7 @@ app.get('/profile', isAuthenticated, (req, res) => {
 });
 app.get('/avatar/:username', (req, res) => {
     // TODO: Serve the avatar image for the user
-    console.log("NEED AVATAR");
+    // Do not use
     handleAvatar(req, res);
 });
 app.post('/register', (req, res) => {
@@ -428,11 +428,16 @@ function addPost(title, content, user) {
     newPost.likes = 0;
     posts.push(newPost);
 }
-const colors = ['red',
-'blue',
-'green',
-'purple',
-'orange']
+const colors = [
+    'red',
+    'maroon',
+    'blue',
+    'aqua',
+    'lime',
+    'green',
+    'purple',
+    'orange'
+]
 // Function to generate an image avatar
 function generateAvatar(letter, width = 100, height = 100) {
     // TODO: Generate an avatar image with a letter
