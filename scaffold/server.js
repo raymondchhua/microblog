@@ -293,7 +293,7 @@ function renderProfile(req, res) {
             userPosts.posts.push(posts[i]);
         }
     }
-    console.log(user.avatar_url);
+    //console.log(user.avatar_url);
     res.render('profile', {userPosts:userPosts, user:user});
 }
 
@@ -391,11 +391,11 @@ function deletePost(req, res) {
 function handleAvatar(req, res) {
     // TODO: Generate and serve the user's avatar image
     let user = getCurrentUser(req);
-    console.log(user);
+    //console.log(user);
     let username = user.username;
     let letter = String(username).charAt(0).toUpperCase();
     user.avatar_url = generateAvatar(letter);
-    console.log(user.avatar_url);
+    //console.log(user.avatar_url);
 }
 
 // Function to get the current user from session
@@ -446,8 +446,6 @@ function generateAvatar(letter, width = 100, height = 100) {
     const context = avatar.getContext('2d');
     let index = letter.charCodeAt(0) % colors.length;
     let color = colors[index];
-    console.log(color);
-    console.log(letter);
     context.fillStyle = color;
     context.fillRect(0,0,width,height);
     context.fillStyle = 'white';

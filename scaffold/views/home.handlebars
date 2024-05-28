@@ -9,9 +9,9 @@
             <!-- make a header here -->
             <form action="/posts" method="POST">
                 <!-- title input field name = "title" -->
-                Title: <input name="title" type="'text">
+                Title: <input name="title" type="text">
                 <!-- text area input field name = "content" -->
-                Content: <input name="content" type="text">
+                Content: <textarea id="post_content" name="content" rows="10" cols="50"></textarea>
                 <div class="form-actions">
                     <button type="button" class="emoji-button" onclick="toggleEmojiPanel()">😀</button>
                     <button type="submit" class="post-button">Post</button>
@@ -96,7 +96,7 @@ function searchEmojis() {
     // use string.includes.
 
     function include(emoji) {
-        console.log(emoji);
+        //console.log(emoji);
         return emoji.slug.includes(searchTerm);
     }
    
@@ -107,10 +107,13 @@ function searchEmojis() {
 
 function insertEmoji(emoji) {
     // put an emoji on a form somehow. 
-
     // do this when you're doing getting the emoji on the form
     //
-    textarea.focus();  // Keep focus on the textarea
+    let content = document.getElementById('post_content');
+    //console.log(content);
+    content.focus();  // Keep focus on the textarea
+    content.value += emoji;
+    //console.log(content.value);
 }
 </script>
 
