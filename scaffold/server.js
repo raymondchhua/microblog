@@ -141,6 +141,7 @@ app.get('/profile', isAuthenticated, (req, res) => {
 });
 app.get('/avatar/:username', (req, res) => {
     // TODO: Serve the avatar image for the user
+    console.log("NEED AVATAR");
     handleAvatar(req, res);
 });
 app.post('/register', (req, res) => {
@@ -261,6 +262,7 @@ function loginUser(req, res) {
     if (user) {
         req.session.userId = user.id;
         req.session.loggedIn = true;
+        handleAvatar(req, res);
         res.redirect('/');
     } else {
         res.redirect('/login?error=Invalid+username');
@@ -291,6 +293,7 @@ function renderProfile(req, res) {
             userPosts.posts.push(posts[i]);
         }
     }
+    console.log(user.avatar_url);
     res.render('profile', {userPosts:userPosts, user:user});
 }
 
@@ -388,11 +391,11 @@ function deletePost(req, res) {
 function handleAvatar(req, res) {
     // TODO: Generate and serve the user's avatar image
     let user = getCurrentUser(req);
+    console.log(user);
     let username = user.username;
-    let letter = String(username).charAt(0);
+    let letter = String(username).charAt(0).toUpperCase();
     user.avatar_url = generateAvatar(letter);
     console.log(user.avatar_url);
-    res.render('main', {user:user});
 }
 
 // Function to get the current user from session
@@ -425,7 +428,11 @@ function addPost(title, content, user) {
     newPost.likes = 0;
     posts.push(newPost);
 }
-
+const colors = ['red',
+'blue',
+'green',
+'purple',
+'orange']
 // Function to generate an image avatar
 function generateAvatar(letter, width = 100, height = 100) {
     // TODO: Generate an avatar image with a letter
@@ -437,11 +444,18 @@ function generateAvatar(letter, width = 100, height = 100) {
     // 5. Return the avatar as a PNG buffer
     const avatar = canvas.createCanvas(width, height);
     const context = avatar.getContext('2d');
-    const color = letter.charCodeAt(0);
-    context.fillStyle = rgb(color,color,color);
-    context.fillText(letter,width/4,height/4);
+    let index = letter.charCodeAt(0) % colors.length;
+    let color = colors[index];
+    console.log(color);
+    console.log(letter);
+    context.fillStyle = color;
     context.fillRect(0,0,width,height);
-    const buffer = canvas.toBuffer('image/png');
+    context.fillStyle = 'white';
+    context.font = '70px Verdana';
+    context.textAlign = 'center';
+    context.fillText(letter,50,75);
+    
+    const buffer = avatar.toBuffer('image/png');
     fs.writeFileSync('./public/images/avatar.png', buffer);
     return avatar.toDataURL();
 }

@@ -72,7 +72,6 @@
         .then((res) => res.json())
         .then((body)=>{
             if (body.deleted) {
-                //let post = document.getElementsByClassName();
                 let currentNode = event;
                 while (currentNode.className != 'post') {
                     currentNode = currentNode.parentElement;
