@@ -4,9 +4,10 @@ const session = require('express-session');
 const canvas = require('canvas');
 const fs = require('fs');
 
-require('dotenv').config();
-const accessToken = process.env.EMOJI_API_KEY;
-
+require('dotenv').config({path:'/mnt/c/Users/raych/Documents/Coding/ECS162/microblog/scaffold/.env'});
+const EMOJI_KEY = process.env.EMOJI_API_KEY;
+const CLIENT_ID = process.env.CLIENT_ID;
+const CLIENT_SECRET = process.env.CLIENT_SECRET;
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Configuration and Setup
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -162,8 +163,8 @@ app.post('/delete/:id', isAuthenticated, (req, res) => {
 });
 
 app.get('/emojis', (req, res) => {
-    //${accesstoken}
-    fetch("https://emoji-api.com/emojis?access_key=5230c75dbfacf312d022b31393036b132c22e784")
+    //${accessToken}
+    fetch(`https://emoji-api.com/emojis?access_key=${EMOJI_KEY}`)
     .then(response => response.json())
     .then(response => {res.send(response);})
 });
@@ -181,6 +182,7 @@ app.listen(PORT, () => {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 // Example data for posts and users
+
 let posts = [
     { id: 1, title: 'Sample Post', content: 'This is a sample post.', username: 'SampleUser', timestamp: '2024-01-01 10:00', likes: 0 },
     { id: 2, title: 'Another Post', content: 'This is another sample post.', username: 'AnotherUser', timestamp: '2024-01-02 12:00', likes: 0 },
@@ -192,6 +194,7 @@ let users = [
 let userLikes = [
     // {userId :  // postIds: []}
 ];
+let postIdIncrement = posts.length+1;
 
 // Function to find a user by username
 function findUserByUsername(username) {
@@ -419,7 +422,8 @@ function addPost(title, content, user) {
     // TODO: Create a new post object and add to posts array
     let newPost = {};
     const currDate = new Date();
-    newPost.id = users[users.length-1]['id']+1;
+    newPost.id = postIdIncrement;
+    postIdIncrement+=1;
     newPost.title = title;
     newPost.content = content;
     newPost.username = user.username;
