@@ -3,17 +3,49 @@ const expressHandlebars = require('express-handlebars');
 const session = require('express-session');
 const canvas = require('canvas');
 const fs = require('fs');
+const crypto = require('crypto');
+const { google } = require('googleapis');
+const { OAuth2Client } = require('google-auth-library');
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const sqlite = require('sqlite');
+const sqlite3 = require('sqlite3');
+const { resolve } = require('path');
+const { request } = require('http');
 
 require('dotenv').config({path:'/mnt/c/Users/raych/Documents/Coding/ECS162/microblog/scaffold/.env'});
 const EMOJI_KEY = process.env.EMOJI_API_KEY;
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
+const dbFileName = process.env.DATABASE_FILE_NAME;
+
+const REDIRECT_URI = 'http://localhost:3000/auth/google/callback';
+const client = new OAuth2Client(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
+
+let db;
+
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Configuration and Setup
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 const app = express();
 const PORT = 3000;
+
+passport.use(new GoogleStrategy({
+    clientID: CLIENT_ID,
+    clientSecret: CLIENT_SECRET,
+    callbackURL: `http://localhost:${PORT}/auth/google/callback`
+}, (token, tokenSecret, profile, done) => {
+    return done(null, profile);
+}));
+
+passport.serializeUser((user, done) => {
+    done(null, user);
+});
+
+passport.deserializeUser((obj, done) => {
+    done(null, obj);
+});
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -100,22 +132,61 @@ app.use(express.json());                            // Parse JSON bodies (as sen
 // We pass the posts and user variables into the home
 // template
 //
-app.get('/', (req, res) => {
-    const posts = getPosts();
-    const user = getCurrentUser(req) || {};
+app.get('/', async (req, res) => {
+    const posts = await getPosts();
+    const user = await getCurrentUser(req) || {};
     res.render('home', { posts, user });
+});
+
+// Redirect to Google's OAuth 2.0 server
+app.get('/auth/google', (req, res) => {
+    const url = client.generateAuthUrl({
+        access_type: 'offline',
+        scope: ['https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile'],
+    });
+    res.redirect(url);
+});
+
+// Handle OAuth 2.0 server response
+app.get('/auth/google/callback', async (req, res) => {
+    const { code } = req.query;
+    const { tokens } = await client.getToken(code);
+    client.setCredentials(tokens);
+
+    const oauth2 = google.oauth2({
+        auth: client,
+        version: 'v2',
+    });
+
+    const userinfo = await oauth2.userinfo.get();
+    const id = userinfo.data.id;
+    const hash = crypto.createHash('sha256')
+                    .update(id)
+                    .digest('hex');
+    req.session.userId = hash;
+    const user = await findUserById(hash);
+    //console.log(user);
+
+    if (user) {
+        //console.log("USER EXISTS");
+        req.session.loggedIn = true;
+        loginUser(req, res);
+    } else {
+        //console.log("USER DOESNT EXIST< GO TO REGISTER");
+        res.redirect('../../register');
+    }
 });
 
 // Register GET route is used for error response from registration
 //
 app.get('/register', (req, res) => {
-    res.render('loginRegister', { regError: req.query.error });
+    res.render('register', { regError: req.query.error });
 });
 
 // Login route GET route is used for error response from login
 //
 app.get('/login', (req, res) => {
-    res.render('loginRegister', { loginError: req.query.error });
+    res.render('login', { loginError: req.query.error });
 });
 
 // Error route: render error page
@@ -126,10 +197,10 @@ app.get('/error', (req, res) => {
 
 // Additional routes that you must implement
 
-app.post('/posts', (req, res) => {
+app.post('/posts', async (req, res) => {
     // TODO: Add a new post and redirect to home
     let body = req.body;
-    addPost(body.title, body.content, getCurrentUser(req));
+    addPost(body.title, body.content, await getCurrentUser(req));
     res.redirect('/');
 });
 app.post('/like/:id', (req, res) => {
@@ -142,7 +213,7 @@ app.get('/profile', isAuthenticated, (req, res) => {
 });
 app.get('/avatar/:username', (req, res) => {
     // TODO: Serve the avatar image for the user
-    // Do not use
+    // Not In Use
     handleAvatar(req, res);
 });
 app.post('/register', (req, res) => {
@@ -173,9 +244,43 @@ app.get('/emojis', (req, res) => {
 // Server Activation
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+async function initializeDB() {
+    db = await sqlite.open({ filename: dbFileName, driver: sqlite3.Database });
+    await db.exec(`
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL UNIQUE,
+            hashedGoogleId TEXT NOT NULL UNIQUE,
+            avatar_url TEXT,
+            memberSince DATETIME NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS posts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            content TEXT NOT NULL,
+            username TEXT NOT NULL,
+            timestamp DATETIME NOT NULL,
+            likes INTEGER NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS likes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            hashedGoogleId TEXT NOT NULL UNIQUE,
+            postIds TEXT,
+        );
+    `);
+}
+
+initializeDB().then(() =>{
+    app.listen(PORT, () => {
+        console.log(`Server is running on http://localhost:${PORT}`);
+    });
+}).catch(err => {
+    console.error('Error initializing database:', err);
 });
+
+
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Support Functions and Variables
@@ -183,54 +288,90 @@ app.listen(PORT, () => {
 
 // Example data for posts and users
 
+/*
 let posts = [
     { id: 1, title: 'Sample Post', content: 'This is a sample post.', username: 'SampleUser', timestamp: '2024-01-01 10:00', likes: 0 },
     { id: 2, title: 'Another Post', content: 'This is another sample post.', username: 'AnotherUser', timestamp: '2024-01-02 12:00', likes: 0 },
 ];
+
 let users = [
     { id: 1, username: 'SampleUser', avatar_url: undefined, memberSince: '2024-01-01 08:00' },
     { id: 2, username: 'AnotherUser', avatar_url: undefined, memberSince: '2024-01-02 09:00' },
-];
+];*/
 let userLikes = [
     // {userId :  // postIds: []}
 ];
-let postIdIncrement = posts.length+1;
-
 // Function to find a user by username
-function findUserByUsername(username) {
+async function findUserByUsername(username) {
     // TODO: Return user object if found, otherwise return undefined
-    for (i=0; i < users.length; i++) {
-        let user = users[i];
-        if (user['username'] == username) {
-            return user;
+    let data = undefined;
+    const usersTableExists = await db.get(`SELECT name FROM sqlite_master WHERE type='table' AND name='users';`);
+    if (usersTableExists) {
+        //console.log('Users table exists.');
+        const users = await db.all('SELECT * FROM users');
+        if (users.length > 0) {
+            users.forEach(user => {
+                if (user.username == username) {
+                    //console.log("Username Found");
+                    data = {
+                        username: user.username,
+                        hashedGoogleId: user.hashedGoogleId,
+                        avatar_url: user.avatar_url,
+                        memberSince: user.memberSince
+
+                    };
+                }
+            });
+        } else {
+            console.log('No users found.');
         }
+    } else {
+        console.log('Users table does not exist.');
     }
-    return undefined;
+    return data;
 }
 
 // Function to find a user by user ID
-function findUserById(userId) {
+async function findUserById(userId) {
     // TODO: Return user object if found, otherwise return undefined
-    for (i=0; i < users.length; i++) {
-        let user = users[i];
-        if (user['id'] == userId) {
-            return user;
+    let data = undefined;
+    const usersTableExists = await db.get(`SELECT name FROM sqlite_master WHERE type='table' AND name='users';`);
+    if (usersTableExists) {
+        //console.log('Users table exists.');
+        const users = await db.all('SELECT * FROM users');
+        if (users.length > 0) {
+            users.forEach(user => {
+                if (user.hashedGoogleId == userId) {
+                    //console.log('GOOGLE ID FOUND');
+                    data = {
+                        username: user.username,
+                        hashedGoogleId: user.hashedGoogleId,
+                        avatar_url: user.avatar_url,
+                        memberSince: user.memberSince
+
+                    };
+                }
+            });
+        } else {
+            console.log('No users found.');
         }
+    } else {
+        console.log('Users table does not exist.');
     }
-    return undefined;
+    return data;
 }
 
 // Function to add a new user
-function addUser(username) {
+async function addUser(username, userId) {
     // TODO: Create a new user object and add to users array
-    let newUser = {};
     const currDate = new Date();
-    newUser.id = users[users.length-1]['id']+1;
-    newUser.username = username;
-    newUser.avatar_url = undefined;
-    newUser.memberSince = ""+currDate.getFullYear()+"-"+currDate.getMonth()+"-"+currDate.getDate()+" "
+    let memberSince = ""+currDate.getFullYear()+"-"+currDate.getMonth()+"-"+currDate.getDate()+" "
     +String(currDate.getHours()).padStart(2,'0')+":"+String(currDate.getMinutes()).padStart(2,'0');
-    users.push(newUser);
+    
+    await db.run(
+        'INSERT INTO users (username, hashedGoogleId, avatar_url, memberSince) VALUES (?, ?, ?, ?)',
+        [username, userId, undefined, memberSince]
+    );
 }
 
 // Middleware to check if user is authenticated
@@ -244,32 +385,26 @@ function isAuthenticated(req, res, next) {
 }
 
 // Function to register a user
-function registerUser(req, res) {
+async function registerUser(req, res) {
     // TODO: Register a new user and redirect appropriately
     const username = req.body.username;
-    const user = findUserByUsername(username);
+    const user = await findUserByUsername(username);
     if (user) {
         res.redirect('/register?error=Username+taken');
     } else {
-        addUser(username);
-        res.redirect('/login');
+        await addUser(username, req.session.userId);
+        loginUser(req, res);
+        //console.log("REGISTER COMPLETE");
     }
+        
 }
 
 // Function to login a user
-function loginUser(req, res) {
+async function loginUser(req, res) {
     // TODO: Login a user and redirect appropriately
-    const username = req.body.username;
-    const user = findUserByUsername(username);
-
-    if (user) {
-        req.session.userId = user.id;
-        req.session.loggedIn = true;
-        handleAvatar(req, res);
-        res.redirect('/');
-    } else {
-        res.redirect('/login?error=Invalid+username');
-    }
+    req.session.loggedIn = true;
+    handleAvatar(req, res);
+    res.redirect('/');
 }
 
 // Function to logout a user
@@ -286,23 +421,51 @@ function logoutUser(req, res) {
 }
 
 // Function to render the profile page
-function renderProfile(req, res) {
+async function renderProfile(req, res) {
     // TODO: Fetch user posts and render the profile page
-    let user = findUserById(req.session.userId);
+    let user = await findUserById(req.session.userId);
     let userPosts = {};
     userPosts.posts = [];
-    for (i=0;i<posts.length;i++) {
-        if (posts[i].username == user.username) {
-            userPosts.posts.push(posts[i]);
+
+    const postsTableExists = await db.get(`SELECT name FROM sqlite_master WHERE type='table' AND name='posts';`);
+    if (postsTableExists) {
+        //console.log('Posts table exists.');
+        posts = await db.all('SELECT * FROM posts');
+        if (posts.length > 0) {
+            //console.log('Posts:');
+            posts.forEach(post => {
+                if (post.username == user.username){
+                    userPosts.posts.push(post);
+                }
+            });
+        } else {
+            console.log('No posts found.');
         }
+    } else {
+        console.log('Posts table does not exist.');
     }
-    //console.log(user.avatar_url);
     res.render('profile', {userPosts:userPosts, user:user});
 }
 
-function updateUserLikes(userId, post, res) {
+async function updateUserLikes(userId, post, res) {
     let foundUser = false;
     let foundPost = false;
+    const likesTableExists = await db.get(`SELECT name FROM sqlite_master WHERE type='table' AND name='likes';`);
+    if (likesTableExists) {
+        //console.log('Posts table exists.');
+        likes = await db.all('SELECT * FROM likes');
+        if (likes.length > 0) {
+            likes.forEach(userLikes => {
+                if (userLikes.hashedGoogleId == userId) {
+                    
+                }
+            });
+        } else {
+            console.log('No posts found.');
+        }
+    } else {
+        console.log('Posts table does not exist.');
+    }
     if (userLikes.length == 0) {
         let userLikeData = {}
         userLikeData.userId = userId;
@@ -310,7 +473,6 @@ function updateUserLikes(userId, post, res) {
         userLikeData.postIds.push(post.id);
         post.likes += 1;
         userLikes.push(userLikeData);
-        //console.log("No user initally");
         res.send({likes: JSON.stringify(1)});
         return;
     }
@@ -323,7 +485,6 @@ function updateUserLikes(userId, post, res) {
                     foundPost = true;
                     post.likes -= 1;
                     postIds.splice(j,1);
-                    //console.log("user and post");
                     res.send({likes: JSON.stringify(0)});
                     return;
                 }
@@ -331,7 +492,6 @@ function updateUserLikes(userId, post, res) {
             if (foundPost==false) {
                 post.likes += 1;
                 userLikes[i].postIds.push(post.id);
-                //console.log("user but no post");
                 res.send({likes: JSON.stringify(1)});
                 return;
             }
@@ -344,7 +504,6 @@ function updateUserLikes(userId, post, res) {
             userLikeData.postIds.push(post.id);
             post.likes += 1;
             userLikes.push(userLikeData);
-            //console.log("No user");
             res.send({likes: JSON.stringify(1)});
             return;
         }
@@ -353,18 +512,27 @@ function updateUserLikes(userId, post, res) {
     return;
 }
 // Function to update post likes
-function updatePostLikes(req, res) {
+async function updatePostLikes(req, res) {
     // TODO: Increment post likes if conditions are met
     let userId = req.session.userId;
     if (userId) {
         let postId = parseInt(req.body.id);
         //console.log("POSTID " + postId);
-        for(i=0;i<posts.length;i++){
-            let post = posts[i];
-            if (post.id == postId) {
-                updateUserLikes(userId, post, res);
-                break;
+        const postsTableExists = await db.get(`SELECT name FROM sqlite_master WHERE type='table' AND name='posts';`);
+        if (postsTableExists) {
+            //console.log('Posts table exists.');
+            posts = await db.all('SELECT * FROM posts');
+            if (posts.length > 0) {
+                posts.forEach(post => {
+                    if (post.id == postId) {
+                        updateUserLikes(userId, post, res);
+                    }
+                });
+            } else {
+                console.log('No posts found.');
             }
+        } else {
+            console.log('Posts table does not exist.');
         }
     } else {
         res.send({redirect: '/login'});
@@ -376,6 +544,7 @@ function deletePost(req, res) {
     if (userId) {
         let postId = parseInt(req.body.id);
         let user = findUserById(userId);
+        
         for(i=0;i<posts.length;i++){
             let post = posts[i];
             if ((post.id == postId) && (post.username == user.username)) {
@@ -391,46 +560,77 @@ function deletePost(req, res) {
 }
 
 // Function to handle avatar generation and serving
-function handleAvatar(req, res) {
+async function handleAvatar(req, res) {
     // TODO: Generate and serve the user's avatar image
-    let user = getCurrentUser(req);
-    //console.log(user);
+    let user = await getCurrentUser(req);
+    //console.log("GET CURRENT USER: ");
     let username = user.username;
     let letter = String(username).charAt(0).toUpperCase();
-    user.avatar_url = generateAvatar(letter);
-    //console.log(user.avatar_url);
+    await db.run(`UPDATE users SET avatar_url = ? WHERE username = ?`,
+        [generateAvatar(letter), username]
+    );
 }
 
 // Function to get the current user from session
-function getCurrentUser(req) {
+async function getCurrentUser(req) {
     // TODO: Return the user object if the session user ID matches
     const id = req.session.userId;
     
     if (id) {
-        return findUserById(id);
+        return await findUserById(id);
+    } else {
+        return undefined;
     }
-    return undefined;
 }
 
 // Function to get all posts, sorted by latest first
-function getPosts() {
+async function getPosts() {
+    let posts = {};
+    const postsTableExists = await db.get(`SELECT name FROM sqlite_master WHERE type='table' AND name='posts';`);
+    if (postsTableExists) {
+        //console.log('Posts table exists.');
+        posts = await db.all('SELECT * FROM posts');
+        if (posts.length > 0) {
+            console.log('Posts:');
+            posts.forEach(post => {
+                //console.log(post);
+            });
+        } else {
+            console.log('No posts found.');
+        }
+    } else {
+        console.log('Posts table does not exist.');
+    }
     return posts.slice().reverse();
 }
 
 // Function to add a new post
-function addPost(title, content, user) {
+async function addPost(title, content, user) {
     // TODO: Create a new post object and add to posts array
-    let newPost = {};
     const currDate = new Date();
-    newPost.id = postIdIncrement;
-    postIdIncrement+=1;
-    newPost.title = title;
-    newPost.content = content;
-    newPost.username = user.username;
-    newPost.timestamp = ""+currDate.getFullYear()+"-"+currDate.getMonth()+"-"+currDate.getDate()+" "
+    const timestamp = ""+currDate.getFullYear()+"-"+currDate.getMonth()+"-"+currDate.getDate()+" "
     +String(currDate.getHours()).padStart(2,'0')+":"+String(currDate.getMinutes()).padStart(2,'0');
-    newPost.likes = 0;
-    posts.push(newPost);
+    
+    await db.run(
+        'INSERT INTO posts (title, content, username, timestamp, likes) VALUES (?, ?, ?, ?, ?)',
+        [title, content, user.username, timestamp, 0]
+    );
+
+    const postsTableExists = await db.get(`SELECT name FROM sqlite_master WHERE type='table' AND name='posts';`);
+    if (postsTableExists) {
+        //console.log('Posts table exists.');
+        const posts = await db.all('SELECT * FROM posts');
+        if (posts.length > 0) {
+            //console.log('Posts:');
+            posts.forEach(post => {
+                console.log(post);
+            });
+        } else {
+            console.log('No posts found.');
+        }
+    } else {
+        console.log('Posts table does not exist.');
+    }
 }
 const colors = [
     'red',
@@ -441,7 +641,8 @@ const colors = [
     'green',
     'purple',
     'orange'
-]
+];
+
 // Function to generate an image avatar
 function generateAvatar(letter, width = 100, height = 100) {
     // TODO: Generate an avatar image with a letter

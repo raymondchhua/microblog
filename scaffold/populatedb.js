@@ -4,7 +4,7 @@ const sqlite = require('sqlite');
 const sqlite3 = require('sqlite3');
 
 // Placeholder for the database file name
-const dbFileName = 'your_database_file.db';
+const dbFileName = 'data.db';
 
 async function initializeDB() {
     const db = await sqlite.open({ filename: dbFileName, driver: sqlite3.Database });
@@ -26,6 +26,12 @@ async function initializeDB() {
             timestamp DATETIME NOT NULL,
             likes INTEGER NOT NULL
         );
+
+        CREATE TABLE IF NOT EXISTS likes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            hashedGoogleId TEXT NOT NULL UNIQUE,
+            postIds TEXT
+        );
     `);
 
     // Sample data - Replace these arrays with your own data
@@ -37,6 +43,10 @@ async function initializeDB() {
     const posts = [
         { title: 'First Post', content: 'This is the first post', username: 'user1', timestamp: '2024-01-01 12:30:00', likes: 0 },
         { title: 'Second Post', content: 'This is the second post', username: 'user2', timestamp: '2024-01-02 12:30:00', likes: 0 }
+    ];
+
+    const likes = [
+        { hashedGoogleId: 'First Post', postIds: 'id1 id2 ' }
     ];
 
     // Insert sample data into the database
@@ -51,6 +61,13 @@ async function initializeDB() {
         return db.run(
             'INSERT INTO posts (title, content, username, timestamp, likes) VALUES (?, ?, ?, ?, ?)',
             [post.title, post.content, post.username, post.timestamp, post.likes]
+        );
+    }));
+
+    await Promise.all(likes.map(like => {
+        return db.run(
+            'INSERT INTO likes (hashedGoogleId, postIds) VALUES (?, ?)',
+            [like.hashedGoogleId, like.postIds]
         );
     }));
 
