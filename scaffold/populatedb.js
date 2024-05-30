@@ -45,10 +45,6 @@ async function initializeDB() {
         { title: 'Second Post', content: 'This is the second post', username: 'user2', timestamp: '2024-01-02 12:30:00', likes: 0 }
     ];
 
-    const likes = [
-        { hashedGoogleId: 'First Post', postIds: 'id1 id2 ' }
-    ];
-
     // Insert sample data into the database
     await Promise.all(users.map(user => {
         return db.run(
