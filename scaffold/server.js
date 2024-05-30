@@ -302,10 +302,10 @@ let posts = [
 let users = [
     { id: 1, username: 'SampleUser', avatar_url: undefined, memberSince: '2024-01-01 08:00' },
     { id: 2, username: 'AnotherUser', avatar_url: undefined, memberSince: '2024-01-02 09:00' },
-];*/
+];
 let userLikes = [
     // {userId :  // postIds: []}
-];
+];*/
 // Function to find a user by username
 async function findUserByUsername(username) {
     // TODO: Return user object if found, otherwise return undefined

@@ -1,13 +1,114 @@
-.header-logo {
+img {
     width:50px;
     height:50px;
+    border-radius: 5px;
+    
+}
+
+footer {
+    background-color: green;
+    color: white;
+    text-align: center;
+}
+
+#appName {
+    font-size: 40px;
+}
+#logo {
+    position: relative;
+    top: 24px;
 }
 
 ul {
     list-style-type: none;
 }
 
+.logo {
+    display: flex;
+}
+
+.homePosts {
+    width: 48%;
+    display: grid;
+    row-gap: 10px;
+    position: relative;
+}
+
+.profilePosts {
+    width: 25%;
+    position: relative;
+    display: grid;
+    row-gap: 10px;
+}
 .post {
     border: solid;
     border-radius: 10px;
+    width: 100%;
+    position: relative;
+    left: 100%;
+}
+
+#recent {
+    position: relative;
+    left: 90%;
+}
+
+#likes {
+    position: relative;
+    left: 90%;
+}
+
+#title {
+    font-weight: bold;
+}
+
+.post-status-bar {
+    display: grid;
+    grid-template-columns: repeat(3, auto);
+    align-items: center;
+    justify-items: center;
+    padding-top: 50px;
+    width: 100%;
+}
+
+.createContainer {
+    width: 50%;
+    display: grid;
+}
+
+.origin {
+    text-align: right;
+}
+
+a {
+    color: aliceblue;
+    text-decoration: none;
+    background-color: green;
+}
+
+a:visited {
+    color: aliceblue;
+}
+.profile-container {
+    background-color: rgb(188, 188, 188);
+    width:fit-content;
+    border-radius: 5px;
+    position: relative;
+    left:40%;
+}
+h2 {
+    position: relative;
+    left:95%;
+    text-align: center;
+}
+.header {
+    justify-self: center;
+    display: grid;
+    grid-template-columns: repeat(4, auto);
+    background-color: green;
+    align-items: center;
+    justify-items: end;
+    width: auto;
+    margin:auto;
+    max-height: 75px;
 }

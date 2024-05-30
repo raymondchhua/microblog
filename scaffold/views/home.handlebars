@@ -8,10 +8,12 @@
         <section class="post-form">
             <!-- make a header here -->
             <form action="/posts" method="POST">
+                <div class="createContainer">
                 <!-- title input field name = "title" -->
                 Title: <input name="title" type="text">
                 <!-- text area input field name = "content" -->
                 Content: <textarea id="post_content" name="content" rows="10" cols="50"></textarea>
+                </div>
                 <div class="form-actions">
                     <button type="button" class="emoji-button" onclick="toggleEmojiPanel()">😀</button>
                     <button type="submit" class="post-button">Post</button>
