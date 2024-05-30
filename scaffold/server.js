@@ -31,6 +31,7 @@ let db;
 const app = express();
 const PORT = 3000;
 
+passport.authenticate('google', { scope: ['profile'] });
 passport.use(new GoogleStrategy({
     clientID: CLIENT_ID,
     clientSecret: CLIENT_SECRET,
@@ -514,51 +515,6 @@ async function updateUserLikes(userId, post, res) {
     } else {
         console.log('Posts table does not exist.');
     }
-    /*
-    let foundUser = false;
-    let foundPost = false;
-    if (userLikes.length == 0) {
-        let userLikeData = {}
-        userLikeData.userId = userId;
-        userLikeData.postIds = [];
-        userLikeData.postIds.push(post.id);
-        post.likes += 1;
-        userLikes.push(userLikeData);
-        res.send({likes: JSON.stringify(1)});
-        return;
-    }
-    for(i=0;i<userLikes.length;i++){
-        if (userLikes[i].userId == userId) {
-            foundUser = true;
-            let postIds = userLikes[i].postIds;
-            for(j=0;j<postIds.length;j++) {
-                if (postIds[j] == post.id) {
-                    foundPost = true;
-                    post.likes -= 1;
-                    postIds.splice(j,1);
-                    res.send({likes: JSON.stringify(0)});
-                    return;
-                }
-            }
-            if (foundPost==false) {
-                post.likes += 1;
-                userLikes[i].postIds.push(post.id);
-                res.send({likes: JSON.stringify(1)});
-                return;
-            }
-            break;
-        }
-        if (foundUser==false) {
-            let userLikeData = {}
-            userLikeData.userId = userId;
-            userLikeData.postIds = [];
-            userLikeData.postIds.push(post.id);
-            post.likes += 1;
-            userLikes.push(userLikeData);
-            res.send({likes: JSON.stringify(1)});
-            return;
-        }
-    }*/
 }
 // Function to update post likes
 async function updatePostLikes(req, res) {
@@ -590,24 +546,41 @@ async function updatePostLikes(req, res) {
     }
 }
 
-function deletePost(req, res) {
+async function deletePost(req, res) {
     let userId = req.session.userId;
     if (userId) {
         let postId = parseInt(req.body.id);
-        let user = findUserById(userId);
-        
-        for(i=0;i<posts.length;i++){
-            let post = posts[i];
-            if ((post.id == postId) && (post.username == user.username)) {
-                posts.splice(i, 1);
-                //console.log(posts);
-                res.send({deleted: 'deleted'});
-                break;
-            }
+        const likesTableExists = await db.get(`SELECT name FROM sqlite_master WHERE type='table' AND name='likes';`);
+        if (likesTableExists) {
+            likes = await db.all('SELECT * FROM likes');
+            //console.log('Got Likes');
+            likes.forEach(async (userLikes) => {
+                let postIds = userLikes.postIds;
+                let foundPost = false
+                let newPostIds = '';
+                postIds.split(' ')
+                .forEach((id) => {
+                    let intId = parseInt(id)
+                    if (intId==postId) {
+                        foundPost = true
+                    } else if (intId != NaN) {
+                        newPostIds += id+' ';
+                    }
+                });
+                if (foundPost) {
+                    await db.run(
+                        `UPDATE likes SET postIds = ? WHERE id = ?`,
+                        [newPostIds, userLikes.id]
+                    );
+                }
+            });
         }
-    } else {
-        res.send({redirect: '/login'});
-    }   
+        await db.run(
+            `DELETE FROM posts WHERE id = ?`,
+            [postId]
+        );
+        res.send({deleted: 'deleted'});
+    }
 }
 
 // Function to handle avatar generation and serving
