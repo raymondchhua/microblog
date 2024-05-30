@@ -17,8 +17,8 @@
                 <button class="like-button" data-id="{{id}}" type='button' onclick="handleLikeClick(this)">♥</button>
             {{/ifCond}}
             
-            <div id='likes'>{{likes}} Likes</div>
-            <div id='origin'>Posted by {{username}} on {{timestamp}}</div>
+            <div name='likes'  data-id="{{id}}">{{likes}} Likes</div>
+            <div name='origin'>Posted by {{username}} on {{timestamp}}</div>
 
         </div>        
     </div>
@@ -40,10 +40,15 @@
         .then(res => res.json())
         .then((body)=>{
             if (body.likes) {
-                const likes = document.getElementById('likes');
-                console.log(likes);
-                console.log(likes.textContent);
-                const currLikes = parseInt(likes.textContent);
+                const likesArray = document.getElementsByName('likes');
+                let likes;
+                likesArray.forEach((div)=> {
+                    if (div.getAttribute('data-id') == postId) {
+                        likes = div;
+                    }
+                })
+                //console.log(likes.textContent);
+                 const currLikes = parseInt(likes.textContent);
                 if (parseInt(body.likes) == 1) {
                     likes.textContent = ""+(currLikes+1)+" Likes"; 
                 } else {
