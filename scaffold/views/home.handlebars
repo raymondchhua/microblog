@@ -29,9 +29,10 @@
 
     <section class="posts-list">
         <!-- recent posts -->
-        <h1>Recent Posts</h1>
         {{#if posts.length}}
-        <ul>
+        <button type="button" id="recent" onclick="sortPosts(this)">Recent</button>
+        <button type="button" id="likes"  onclick="sortPosts(this)">Likes</button>
+        <ul class="homePosts">
             {{#each posts}}
                 <!-- you have to pass the user in to posts and this is the syntax -->
                 {{> post this user=../user}} 
@@ -47,6 +48,34 @@
 
 {{! JavaScript for Emoji Integration }}
 <script>
+
+let sortType ='';
+function sortPosts(button) {
+    let postList = document.getElementsByClassName('homePosts')[0];
+    let posts = document.getElementsByClassName('post');
+    let postsArray = Array.prototype.slice.call(posts,0);
+
+    if ((sortType != 'likes') && (button.id == 'likes')) {
+        sortType = 'likes';
+        postsArray.sort(function(post1, post2) {
+            return parseInt(post1.getAttribute('data-likes')) - parseInt(post2.getAttribute('data-likes'));
+        }).reverse();
+
+        postsArray.forEach(post => {
+            postList.insertBefore(post, postList[0]);
+        });
+
+    } else if ((sortType != 'recent') && (button.id == 'recent')){
+        sortType = 'recent';
+        postsArray.sort(function(post1, post2) {
+            return parseInt(post1.getAttribute('data-id')) - parseInt(post2.getAttribute('data-id'));
+        }).reverse();
+
+        postsArray.forEach(post => {
+            postList.insertBefore(post, postList[0]);
+        });
+    }
+}
 
 /*
  You want to show a subset of the emojis. About 200. However,

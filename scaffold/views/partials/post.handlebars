@@ -1,12 +1,12 @@
 {{! Partial for a single post }}
-<div class="post">
+<div class="post" data-id="{{id}}" data-likes="{{likes}}">
     <div class="post-avatar">
         <!-- the user's avatar -->
     </div>
     <div class="post-content preserve-newlines">
         <!-- the post -->
 
-        <div id="title"><strong>{{title}}</strong></div>
+        <div id="title">{{title}}</div>
         <div id="content">{{content}}</div>
         <div class="post-status-bar">
             <!-- everything that is shown in the status bar -->
@@ -17,7 +17,7 @@
                 <button class="like-button" data-id="{{id}}" type='button' onclick="handleLikeClick(this)">♥</button>
             {{/ifCond}}
             
-            <div name='likes'  data-id="{{id}}">{{likes}} Likes</div>
+            <div name='likes' data-id="{{id}}">{{likes}} Likes</div>
             <div name='origin'>Posted by {{username}} on {{timestamp}}</div>
 
         </div>        

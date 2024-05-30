@@ -221,7 +221,6 @@ app.post('/registerUsername', (req, res) => {
     // TODO: Register a new user
     registerUser(req, res);
 });
-
 app.post('/login', (req, res) => {
     // TODO: Login a user
     // NO LONGER IN USE
@@ -239,7 +238,6 @@ app.post('/delete/:id', isAuthenticated, (req, res) => {
     // TODO: Delete a post if the current user is the owner
     deletePost(req,res);
 });
-
 app.get('/emojis', (req, res) => {
     //${accessToken}
     fetch(`https://emoji-api.com/emojis?access_key=${EMOJI_KEY}`)
