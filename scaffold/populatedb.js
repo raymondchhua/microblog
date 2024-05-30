@@ -60,13 +60,6 @@ async function initializeDB() {
         );
     }));
 
-    await Promise.all(likes.map(like => {
-        return db.run(
-            'INSERT INTO likes (hashedGoogleId, postIds) VALUES (?, ?)',
-            [like.hashedGoogleId, like.postIds]
-        );
-    }));
-
     console.log('Database populated with initial data.');
     await db.close();
 }
