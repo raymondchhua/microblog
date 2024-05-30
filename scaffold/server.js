@@ -174,14 +174,14 @@ app.get('/auth/google/callback', async (req, res) => {
         loginUser(req, res);
     } else {
         //console.log("USER DOESNT EXIST< GO TO REGISTER");
-        res.redirect('../../register');
+        res.redirect('../../registerUsername');
     }
 });
 
 // Register GET route is used for error response from registration
 //
-app.get('/register', (req, res) => {
-    res.render('register', { regError: req.query.error });
+app.get('/registerUsername', (req, res) => {
+    res.render('registerUsername', { regError: req.query.error });
 });
 
 // Login route GET route is used for error response from login
@@ -217,17 +217,23 @@ app.get('/avatar/:username', (req, res) => {
     // Not In Use
     handleAvatar(req, res);
 });
-app.post('/register', (req, res) => {
+app.post('/registerUsername', (req, res) => {
     // TODO: Register a new user
     registerUser(req, res);
 });
+
 app.post('/login', (req, res) => {
     // TODO: Login a user
+    // NO LONGER IN USE
     loginUser(req, res);
 });
 app.get('/logout', (req, res) => {
     // TODO: Logout the user
     logoutUser(req, res);
+});
+app.get('/googleLogout', (req, res) => {
+    // TODO: Logout the user
+    res.render('googleLogout');
 });
 app.post('/delete/:id', isAuthenticated, (req, res) => {
     // TODO: Delete a post if the current user is the owner
@@ -396,7 +402,7 @@ async function registerUser(req, res) {
     const username = req.body.username;
     const user = await findUserByUsername(username);
     if (user) {
-        res.redirect('/register?error=Username+taken');
+        res.redirect('/registerUsername?error=Username+taken');
     } else {
         await addUser(username, req.session.userId);
         loginUser(req, res);
@@ -421,7 +427,8 @@ function logoutUser(req, res) {
             console.error('Error destroying session:', err);
             res.direct('/error');
         } else {
-            res.redirect('/');
+            res.redirect('/googleLogout');
+            //res.redirect('/');
         }
     });
 }
