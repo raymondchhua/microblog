@@ -267,7 +267,7 @@ async function initializeDB() {
         CREATE TABLE IF NOT EXISTS likes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             hashedGoogleId TEXT NOT NULL UNIQUE,
-            postIds TEXT,
+            postIds TEXT
         );
     `);
 }
@@ -372,6 +372,11 @@ async function addUser(username, userId) {
         'INSERT INTO users (username, hashedGoogleId, avatar_url, memberSince) VALUES (?, ?, ?, ?)',
         [username, userId, undefined, memberSince]
     );
+
+    await db.run(
+        'INSERT INTO likes (hashedGoogleId, postIds) VALUES (?, ?)',
+        [userId, ""]
+    );
 }
 
 // Middleware to check if user is authenticated
@@ -432,7 +437,6 @@ async function renderProfile(req, res) {
         //console.log('Posts table exists.');
         posts = await db.all('SELECT * FROM posts');
         if (posts.length > 0) {
-            //console.log('Posts:');
             posts.forEach(post => {
                 if (post.username == user.username){
                     userPosts.posts.push(post);
@@ -448,16 +452,60 @@ async function renderProfile(req, res) {
 }
 
 async function updateUserLikes(userId, post, res) {
-    let foundUser = false;
-    let foundPost = false;
     const likesTableExists = await db.get(`SELECT name FROM sqlite_master WHERE type='table' AND name='likes';`);
     if (likesTableExists) {
         //console.log('Posts table exists.');
         likes = await db.all('SELECT * FROM likes');
         if (likes.length > 0) {
-            likes.forEach(userLikes => {
+            //console.log('Got Likes');
+            likes.forEach(async (userLikes) => {
                 if (userLikes.hashedGoogleId == userId) {
-                    
+                    let postIds = userLikes.postIds;
+                    console.log(postIds);
+                    if (postIds.length == 0) {
+                        console.log("LIKING POST");
+                        await db.run(
+                            `UPDATE likes SET postIds = ? WHERE id = ?`,
+                            [userLikes.postIds+post.id+" ", userLikes.id]
+                        );
+                        await db.run(`UPDATE posts SET likes = ? WHERE id = ?`,
+                            [post.likes+1, post.id]
+                        );
+                        res.send({likes: JSON.stringify(1)});
+                    } else{
+                        let foundPost = false
+                        let newPostIds = '';
+                        postIds.split(' ')
+                        .forEach((id) => {
+                            let intId = parseInt(id)
+                            if (intId==post.id) {
+                                foundPost = true
+                            } else if (intId != NaN) {
+                                newPostIds += id+' ';
+                            }
+                        });
+                        if (foundPost) {
+                            console.log("Remove ID: " + post.id);
+                            await db.run(
+                                `UPDATE likes SET postIds = ? WHERE id = ?`,
+                                [newPostIds, userLikes.id]
+                            );
+                            await db.run(`UPDATE posts SET likes = ? WHERE id = ?`,
+                                [post.likes-1, post.id]
+                            );
+                            res.send({likes: JSON.stringify(0)});
+                        } else {
+                            console.log("INCREMENT LIKES: " + post.likes+1);
+                            await db.run(
+                                `UPDATE likes SET postIds = ? WHERE id = ?`,
+                                [userLikes.postIds+post.id+" ", userLikes.id]
+                            );
+                            await db.run(`UPDATE posts SET likes = ? WHERE id = ?`,
+                                [post.likes+1, post.id]
+                            );
+                            res.send({likes: JSON.stringify(1)});
+                        }
+                    }
                 }
             });
         } else {
@@ -466,6 +514,9 @@ async function updateUserLikes(userId, post, res) {
     } else {
         console.log('Posts table does not exist.');
     }
+    /*
+    let foundUser = false;
+    let foundPost = false;
     if (userLikes.length == 0) {
         let userLikeData = {}
         userLikeData.userId = userId;
@@ -507,14 +558,13 @@ async function updateUserLikes(userId, post, res) {
             res.send({likes: JSON.stringify(1)});
             return;
         }
-    }
-
-    return;
+    }*/
 }
 // Function to update post likes
 async function updatePostLikes(req, res) {
     // TODO: Increment post likes if conditions are met
     let userId = req.session.userId;
+    //console.log(userId);
     if (userId) {
         let postId = parseInt(req.body.id);
         //console.log("POSTID " + postId);
@@ -525,6 +575,7 @@ async function updatePostLikes(req, res) {
             if (posts.length > 0) {
                 posts.forEach(post => {
                     if (post.id == postId) {
+                        //console.log("POST FOUND");
                         updateUserLikes(userId, post, res);
                     }
                 });
@@ -591,7 +642,6 @@ async function getPosts() {
         //console.log('Posts table exists.');
         posts = await db.all('SELECT * FROM posts');
         if (posts.length > 0) {
-            console.log('Posts:');
             posts.forEach(post => {
                 //console.log(post);
             });
@@ -621,7 +671,6 @@ async function addPost(title, content, user) {
         //console.log('Posts table exists.');
         const posts = await db.all('SELECT * FROM posts');
         if (posts.length > 0) {
-            //console.log('Posts:');
             posts.forEach(post => {
                 console.log(post);
             });
