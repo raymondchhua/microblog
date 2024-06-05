@@ -10,8 +10,6 @@ const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const sqlite = require('sqlite');
 const sqlite3 = require('sqlite3');
-const { resolve } = require('path');
-const { request } = require('http');
 
 require('dotenv').config({path:'/mnt/c/Users/raych/Documents/Coding/ECS162/microblog/scaffold/.env'});
 const EMOJI_KEY = process.env.EMOJI_API_KEY;
@@ -201,7 +199,8 @@ app.get('/error', (req, res) => {
 app.post('/posts', async (req, res) => {
     // TODO: Add a new post and redirect to home
     let body = req.body;
-    addPost(body.title, body.content, await getCurrentUser(req));
+    console.log(body);
+    addPost(body.title, body.content, body.hashtag, await getCurrentUser(req));
     res.redirect('/');
 });
 app.post('/like/:id', (req, res) => {
@@ -264,6 +263,7 @@ async function initializeDB() {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT NOT NULL,
             content TEXT NOT NULL,
+            hashtag TEXT NOT NULL,
             username TEXT NOT NULL,
             timestamp DATETIME NOT NULL,
             likes INTEGER NOT NULL
@@ -633,17 +633,17 @@ async function getPosts() {
 }
 
 // Function to add a new post
-async function addPost(title, content, user) {
+async function addPost(title, content, hashtags, user) {
     // TODO: Create a new post object and add to posts array
     const currDate = new Date();
     const timestamp = ""+currDate.getFullYear()+"-"+currDate.getMonth()+"-"+currDate.getDate()+" "
     +String(currDate.getHours()).padStart(2,'0')+":"+String(currDate.getMinutes()).padStart(2,'0');
     
     await db.run(
-        'INSERT INTO posts (title, content, username, timestamp, likes) VALUES (?, ?, ?, ?, ?)',
-        [title, content, user.username, timestamp, 0]
+        'INSERT INTO posts (title, content, hashtags, username, timestamp, likes) VALUES (?, ?, ?, ?, ?, ?)',
+        [title, content, hashtags, user.username, timestamp, 0]
     );
-
+    /*
     const postsTableExists = await db.get(`SELECT name FROM sqlite_master WHERE type='table' AND name='posts';`);
     if (postsTableExists) {
         //console.log('Posts table exists.');
@@ -657,7 +657,7 @@ async function addPost(title, content, user) {
         }
     } else {
         console.log('Posts table does not exist.');
-    }
+    }*/
 }
 const colors = [
     'red',
