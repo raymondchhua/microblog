@@ -640,7 +640,7 @@ async function addPost(title, content, hashtags, user) {
     +String(currDate.getHours()).padStart(2,'0')+":"+String(currDate.getMinutes()).padStart(2,'0');
     
     await db.run(
-        'INSERT INTO posts (title, content, hashtags, username, timestamp, likes) VALUES (?, ?, ?, ?, ?, ?)',
+        'INSERT INTO posts (title, content, hashtag, username, timestamp, likes) VALUES (?, ?, ?, ?, ?, ?)',
         [title, content, hashtags, user.username, timestamp, 0]
     );
     /*

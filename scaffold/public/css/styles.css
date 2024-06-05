@@ -18,7 +18,10 @@ footer {
     position: relative;
     top: 24px;
 }
-
+.post-form {
+    display: flex;
+    float: left;
+}
 ul {
     list-style-type: none;
 }
@@ -43,20 +46,17 @@ ul {
 .post {
     border: solid;
     border-radius: 10px;
-    width: 100%;
-    position: relative;
-    left: 100%;
 }
 
-#recent {
+#search {
     position: relative;
-    left: 90%;
 }
 
-#likes {
+#sort {
     position: relative;
-    left: 90%;
+    left: 25%;
 }
+
 
 #title {
     font-weight: bold;
@@ -83,9 +83,18 @@ ul {
 a {
     color: aliceblue;
     text-decoration: none;
-    background-color: green;
 }
 
+.container {
+    display: grid;
+
+}
+#GoogleLink {
+    color: black;
+}
+#hashtag {
+    color:blue;
+}
 a:visited {
     color: aliceblue;
 }

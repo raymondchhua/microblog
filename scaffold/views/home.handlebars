@@ -13,6 +13,7 @@
                 Title: <input name="title" type="text">
                 <!-- text area input field name = "content" -->
                 Content: <textarea id="post_content" name="content" rows="10" cols="50"></textarea>
+                HashTags: <input name="hashtag" type="search" oninput="searchPosts()">
                 </div>
                 <div class="form-actions">
                     <button type="button" class="emoji-button" onclick="toggleEmojiPanel()">😀</button>
@@ -32,12 +33,13 @@
     <section class="posts-list">
         <!-- recent posts -->
         {{#if posts.length}}
-        <button type="button" id="recent" onclick="sortPosts(this)">Recent</button>
-        <button type="button" id="likes"  onclick="sortPosts(this)">Likes</button>
+        Search:<input type="text" id="search">
+        <button type="button" name="recent" id="sort" onclick="sortPosts(this)">Recent</button>
+        <button type="button" name="likes"  id="sort" onclick="sortPosts(this)">Likes</button>
         <ul class="homePosts">
             {{#each posts}}
                 <!-- you have to pass the user in to posts and this is the syntax -->
-                {{> post this user=../user}} 
+                <li>{{> post this user=../user}}</li> 
             {{/each}}
         </ul>
         {{else}}
@@ -51,13 +53,18 @@
 {{! JavaScript for Emoji Integration }}
 <script>
 
+
+function searchPosts(button) {
+
+}
+
 let sortType ='recent';
 function sortPosts(button) {
     let postList = document.getElementsByClassName('homePosts')[0];
     let posts = document.getElementsByClassName('post');
     let postsArray = Array.prototype.slice.call(posts,0);
 
-    if ((sortType != 'likes') && (button.id == 'likes')) {
+    if ((sortType != 'likes') && (button.name == 'likes')) {
         sortType = 'likes';
         postsArray.sort(function(post1, post2) {
             return parseInt(post1.getAttribute('data-likes')) - parseInt(post2.getAttribute('data-likes'));
@@ -67,7 +74,7 @@ function sortPosts(button) {
             postList.insertBefore(post, postList[0]);
         });
 
-    } else if ((sortType != 'recent') && (button.id == 'recent')){
+    } else if ((sortType != 'recent') && (button.name == 'recent')){
         sortType = 'recent';
         postsArray.sort(function(post1, post2) {
             return parseInt(post1.getAttribute('data-id')) - parseInt(post2.getAttribute('data-id'));
