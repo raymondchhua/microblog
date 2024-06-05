@@ -8,12 +8,13 @@
         <section class="post-form">
             <!-- make a header here -->
             <form action="/posts" method="POST">
+                <strong class="create-section">Create Post</strong>
                 <div class="createContainer">
                 <!-- title input field name = "title" -->
                 Title: <input name="title" type="text">
                 <!-- text area input field name = "content" -->
                 Content: <textarea id="post_content" name="content" rows="10" cols="50"></textarea>
-                HashTags: <input name="hashtag" type="search" oninput="searchPosts()">
+                HashTags: <input name="hashtag"  id='post-search' type="text">
                 </div>
                 <div class="form-actions">
                     <button type="button" class="emoji-button" onclick="toggleEmojiPanel()">😀</button>
@@ -33,7 +34,9 @@
     <section class="posts-list">
         <!-- recent posts -->
         {{#if posts.length}}
-        Search:<input type="text" id="search">
+        <br>
+        <br>
+        Search:<input type="text" id="search" oninput="searchPosts(this)">
         <button type="button" name="recent" id="sort" onclick="sortPosts(this)">Recent</button>
         <button type="button" name="likes"  id="sort" onclick="sortPosts(this)">Likes</button>
         <ul class="homePosts">
@@ -54,8 +57,35 @@
 <script>
 
 
-function searchPosts(button) {
-
+function searchPosts(search) {
+    let searchTerm = search.value.toLowerCase();
+    let posts = document.getElementsByClassName('post');
+    let postsArray = Array.prototype.slice.call(posts,0);
+    function include(post) {
+        //console.log(emoji);
+        return post.getAttribute('data-hashtag').toLowerCase().includes(searchTerm.toLowerCase());
+    }
+   
+    const filteredPosts = postsArray.filter(include);
+    
+    postsArray.forEach(post => {
+      post.style.display = 'none';
+    });
+    filteredPosts.forEach(post => {
+      post.style.display = 'block';
+    });
+    /*
+    postsArray.forEach(post => {
+        let hashtags = post.getAttribute('data-hashtag').toLowerCase().split(" ");
+        for (let i=0; i<search.length;i++) {
+            print(search);
+        }
+    })
+    console.log(posts[0].getAttribute('data-hashtag'));
+    
+    posts[0].style.display = 'none';
+    posts[0].style.display = 'block';*/
+    
 }
 
 let sortType ='recent';

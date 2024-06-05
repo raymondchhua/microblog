@@ -213,8 +213,8 @@ app.get('/profile', isAuthenticated, (req, res) => {
 });
 app.get('/avatar/:username', (req, res) => {
     // TODO: Serve the avatar image for the user
-    // Not In Use
-    handleAvatar(req, res);
+    const username = req.params.username;
+    res.send({url: generateAvatar(username.charAt(0).toUpperCase())});
 });
 app.post('/registerUsername', (req, res) => {
     // TODO: Register a new user

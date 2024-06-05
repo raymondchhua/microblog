@@ -71,8 +71,12 @@ ul {
     width: 100%;
 }
 
+.create-section {
+    font-size: 28px;
+}
+
 .createContainer {
-    width: 50%;
+    width: 80%;
     display: grid;
 }
 
@@ -85,19 +89,19 @@ a {
     text-decoration: none;
 }
 
-.container {
-    display: grid;
-
-}
 #GoogleLink {
     color: black;
+    text-decoration: underline;
 }
+
 #hashtag {
     color:blue;
 }
+
 a:visited {
     color: aliceblue;
 }
+
 .profile-container {
     background-color: rgb(188, 188, 188);
     width:fit-content;
@@ -105,11 +109,13 @@ a:visited {
     position: relative;
     left:40%;
 }
+
 h2 {
     position: relative;
     left:95%;
     text-align: center;
 }
+
 .header {
     justify-self: center;
     display: grid;

@@ -1,13 +1,15 @@
 {{! Partial for a single post }}
-<div class="post" data-id="{{id}}" data-likes="{{likes}}">
+<div class="post" data-id="{{id}}" data-likes="{{likes}}" data-hashtag="{{hashtag}}">
     <div class="post-avatar">
         <!-- the user's avatar -->
+        <img src="images/logo.png" name="{{username}}" id ="post-avatar" alt="User Avatar" onload="getAvatar(this)">
     </div>
     <div class="post-content preserve-newlines">
         <!-- the post -->
 
         <div id="title">{{title}}</div>
         <div id="content">{{content}}</div>
+        <div id="hashtag">{{hashtag}}</div>
         <div class="post-status-bar">
             <!-- everything that is shown in the status bar -->
             
@@ -24,6 +26,14 @@
     </div>
 </div>
 <script>
+    function getAvatar(tag) {
+        fetch('/avatar/'+ tag.name)
+        .then(res => res.json())
+        .then(body => {
+            tag.src = body.url;
+        })
+        .catch(err => {console.error('error: ', err);});
+    }
 
     function handleLikeClick(event) {
         const postId = event.getAttribute('data-id');
