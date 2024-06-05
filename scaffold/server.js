@@ -467,9 +467,9 @@ async function updateUserLikes(userId, post, res) {
             likes.forEach(async (userLikes) => {
                 if (userLikes.hashedGoogleId == userId) {
                     let postIds = userLikes.postIds;
-                    console.log(postIds);
+                    //console.log(postIds);
                     if (postIds.length == 0) {
-                        console.log("LIKING POST");
+                        //console.log("LIKING POST");
                         await db.run(
                             `UPDATE likes SET postIds = ? WHERE id = ?`,
                             [userLikes.postIds+post.id+" ", userLikes.id]
@@ -491,7 +491,7 @@ async function updateUserLikes(userId, post, res) {
                             }
                         });
                         if (foundPost) {
-                            console.log("Remove ID: " + post.id);
+                            //console.log("Remove ID: " + post.id);
                             await db.run(
                                 `UPDATE likes SET postIds = ? WHERE id = ?`,
                                 [newPostIds, userLikes.id]
@@ -501,7 +501,7 @@ async function updateUserLikes(userId, post, res) {
                             );
                             res.send({likes: JSON.stringify(0)});
                         } else {
-                            console.log("INCREMENT LIKES: " + post.likes+1);
+                            //console.log("INCREMENT LIKES: " + (post.likes+1));
                             await db.run(
                                 `UPDATE likes SET postIds = ? WHERE id = ?`,
                                 [userLikes.postIds+post.id+" ", userLikes.id]
@@ -527,7 +527,8 @@ async function updatePostLikes(req, res) {
     let userId = req.session.userId;
     //console.log(userId);
     if (userId) {
-        let postId = parseInt(req.body.id);
+        //console.log(req.params.id);
+        let postId = parseInt(req.params.id);
         //console.log("POSTID " + postId);
         const postsTableExists = await db.get(`SELECT name FROM sqlite_master WHERE type='table' AND name='posts';`);
         if (postsTableExists) {
@@ -554,7 +555,7 @@ async function updatePostLikes(req, res) {
 async function deletePost(req, res) {
     let userId = req.session.userId;
     if (userId) {
-        let postId = parseInt(req.body.id);
+        let postId = parseInt(req.params.id);
         const likesTableExists = await db.get(`SELECT name FROM sqlite_master WHERE type='table' AND name='likes';`);
         if (likesTableExists) {
             likes = await db.all('SELECT * FROM likes');

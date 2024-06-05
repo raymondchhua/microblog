@@ -40,12 +40,8 @@
         // you might want to "fetch" something...
         let data = {id:postId};
         console.log(event);
-        fetch('/like/:id', {
-            method: "POST",
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
+        fetch('/like/'+ postId, {
+            method: "POST"
             })
         .then(res => res.json())
         .then((body)=>{
@@ -77,12 +73,8 @@
         // you might want to "fetch" something...
         let data = {id:postId};
 
-        fetch('/delete/:id', {
-            method: "POST",
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
+        fetch('/delete/'+ postId, {
+            method: "POST"
             })
         .then((res) => res.json())
         .then((body)=>{
