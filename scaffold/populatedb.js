@@ -37,13 +37,15 @@ async function initializeDB() {
 
     // Sample data - Replace these arrays with your own data
     const users = [
-        { username: 'user1', hashedGoogleId: 'hashedGoogleId1', avatar_url: '', memberSince: '2024-01-01 12:00:00' },
-        { username: 'user2', hashedGoogleId: 'hashedGoogleId2', avatar_url: '', memberSince: '2024-01-02 12:00:00' }
+        { username: 'Sam', hashedGoogleId: 'hashedGoogleId1', avatar_url: '', memberSince: '2024-01-01 12:00:00' },
+        { username: 'Tom', hashedGoogleId: 'hashedGoogleId2', avatar_url: '', memberSince: '2024-01-02 12:00:00' },
+        { username: 'Dan', hashedGoogleId: 'hashedGoogleId3', avatar_url: '', memberSince: '2024-01-02 12:00:00' }
     ];
 
     const posts = [
-        { title: 'First Post', content: 'This is the first post', hashtag: '#FIRST', username: 'user1', timestamp: '2024-01-01 12:30:00', likes: 0 },
-        { title: 'Second Post', content: 'This is the second post', hashtag: '#SECOND', username: 'user2', timestamp: '2024-01-02 12:30:00', likes: 0 }
+        { title: 'First Post', content: 'This is the first post', hashtag: '#FIRST #Happy', username: 'Sam', timestamp: '2024-01-01 12:30:00', likes: 10 },
+        { title: 'Second Post', content: 'This is the second post', hashtag: '#SECOND #Sad', username: 'Tom', timestamp: '2024-01-02 11:30:00', likes: 15 },
+        { title: 'Third Post', content: 'This is the third post', hashtag: '#THIRD #angry', username: 'Dan', timestamp: '2024-01-03 10:30:00', likes: 20 },
     ];
 
     // Insert sample data into the database
